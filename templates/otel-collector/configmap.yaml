@@ -16,8 +16,11 @@ data:
           http:
             endpoint: 0.0.0.0:4318
 
+    extensions:
+      health_check:
+        endpoint: 0.0.0.0:13133
+
     connectors:
-      # Graphe de dépendances service-à-service généré depuis les traces
       servicegraph:
         latency_histogram_buckets: [1ms, 2ms, 6ms, 10ms, 100ms, 250ms, 500ms, 1s, 2s, 5s]
         dimensions:
@@ -27,7 +30,6 @@ data:
           ttl: 2s
           max_items: 1000
 
-      # Métriques RED (Rate, Error, Duration) par service depuis les traces
       spanmetrics:
         namespace: traces
         histogram:
@@ -37,7 +39,6 @@ data:
           - name: http.method
           - name: http.status_code
           - name: http.route
-          - name: service.name
         exemplars:
           enabled: true
 
@@ -51,16 +52,13 @@ data:
         spike_limit_mib: 50
 
     exporters:
-      # Traces → Tempo (OTLP gRPC)
       otlp/tempo:
         endpoint: tempo.{{ .Values.namespace }}.svc.cluster.local:4317
         tls:
           insecure: true
 
-      # Métriques spanmetrics + servicegraph → exposées en pull pour Prometheus
       prometheus:
         endpoint: "0.0.0.0:8889"
-        namespace: otel
         resource_to_telemetry_conversion:
           enabled: true
 
@@ -68,15 +66,14 @@ data:
         verbosity: basic
 
     service:
+      extensions: [health_check]
       pipelines:
-        # Pipeline traces : reçoit → traite → envoie vers Tempo ET les connecteurs
         traces:
           receivers: [otlp]
           processors: [memory_limiter, batch]
-          exporters: [otlp/tempo, spanmetrics, servicegraph]
+          exporters: [otlp/tempo, spanmetrics, servicegraph, debug]
 
-        # Pipeline métriques : les connecteurs génèrent → exposées à Prometheus
         metrics:
-          receivers: [spanmetrics, servicegraph]
+          receivers: [spanmetrics, servicegraph, otlp]
           processors: [batch]
           exporters: [prometheus]

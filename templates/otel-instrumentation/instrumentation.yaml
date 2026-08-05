@@ -26,7 +26,7 @@ spec:
 
   sampler:
     type: parentbased_traceidratio
-    argument: "1.0"   # 100% en dev — à baisser en prod
+    argument: {{ "1.0" | quote }}   # 100% en dev — à baisser en prod
 
   # ── Python (student-service + enrollment-service) ─────────────────────
   python:
