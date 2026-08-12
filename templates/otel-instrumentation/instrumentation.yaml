@@ -12,7 +12,7 @@ apiVersion: opentelemetry.io/v1alpha1
 kind: Instrumentation
 metadata:
   name: university-instrumentation
-  namespace: {{ .Values.targetNamespace | default "university-app" | quote }}
+  namespace: "{{ .Values.targetNamespace | default \"university-app\" }}"
   labels:
     app.kubernetes.io/part-of: university-monitoring
 spec:
