@@ -12,22 +12,19 @@ apiVersion: opentelemetry.io/v1alpha1
 kind: Instrumentation
 metadata:
   name: university-instrumentation
-  namespace: {{ .Values.targetNamespace | default "university-app" }}
+  namespace: {{ .Values.targetNamespace | default "university-app" | quote }}
   labels:
     app.kubernetes.io/part-of: university-monitoring
 spec:
   exporter:
     endpoint: http://otel-collector.{{ .Values.namespace }}.svc.cluster.local:4317
-
   propagators:
     - tracecontext
     - baggage
     - b3
-
   sampler:
     type: parentbased_traceidratio
     argument: "1.0"
-
   # ── Python (student-service + enrollment-service) ─────────────────────
   python:
     env:
@@ -39,7 +36,6 @@ spec:
         value: none   # Logs gérés séparément
       - name: OTEL_PYTHON_LOGGING_AUTO_INSTRUMENTATION_ENABLED
         value: "false"
-
   # ── Java (teacher-admin-service / Spring Boot) ─────────────────────────
   java:
     env:
